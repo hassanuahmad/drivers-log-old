@@ -28,7 +28,7 @@ db.run(`CREATE TABLE IF NOT EXISTS lesson (
   roadTest TEXT NOT NULL,
   startTime TEXT NOT NULL,
   endTime TEXT NOT NULL,
-  date TEXT NOT NULL,
+  date DATE NOT NULL,
   duration TEXT NOT NULL,
   paymentType TEXT NOT NULL,
   paymentAmount TEXT NOT NULL,
@@ -155,6 +155,21 @@ app.get("/", (req, res) => {
         if (err) console.log(err);
         else res.send(result);
     });
+});
+
+app.get("/:year/:month", async (req, res) => {
+    const { year, month } = req.params;
+    const lastDayOfMonth = new Date(year, month, 0).getDate(); // calculate last day of month dynamically
+    const startDate = `${year}-${month}-01`;
+    const endDate = `${year}-${month}-${lastDayOfMonth}`; // use dynamically calculated last day of month
+
+    db.all(
+        `SELECT * FROM lesson WHERE date BETWEEN '${startDate}' AND '${endDate}'`,
+        (err, result) => {
+            if (err) console.log(err);
+            else res.send(result);
+        }
+    );
 });
 
 app.post("/vehicleMaintenance", (req, res) => {
