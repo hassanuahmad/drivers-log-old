@@ -7,7 +7,10 @@ app.use(cors());
 app.use(express.json());
 
 // Open a connection to the database
+// test DB
 const db = new sqlite3.Database("mydb.sqlite");
+// production DB
+// const db = new sqlite3.Database("db.sqlite");
 
 // create the student table
 db.run(`CREATE TABLE IF NOT EXISTS student (
@@ -16,7 +19,7 @@ db.run(`CREATE TABLE IF NOT EXISTS student (
   lastName TEXT NOT NULL,
   phoneNumber TEXT NOT NULL,
   streetAddress TEXT NOT NULL,
-  email TEXT NOT NULL,
+  email TEXT NULL,
   drivingClass TEXT NOT NULL,
   remarks TEXT NULL
 )`);

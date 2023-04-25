@@ -27,14 +27,36 @@
 	];
 
 	const getLessons = async (selectedYear, selectedMonth) => {
-		const response = await axios.get(`http://localhost:3000/${selectedYear}/${selectedMonth}`);
-		lessons = response.data;
+		try {
+			const response = await axios.get(`http://localhost:3000/${selectedYear}/${selectedMonth}`);
+			lessons = response.data || [];
+
+			for (let lesson of lessons) {
+				const studentResponse = await axios.get(
+					`http://localhost:3000/student/${lesson.studentId}`
+				);
+				lesson.student = studentResponse.data;
+			}
+			lessonsStore.set(lessons);
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
+	// get the total duration of all lessons
+	const getTotalDuration = (lessons) => {
+		let totalMinutes = 0;
 
 		for (let lesson of lessons) {
-			const studentResponse = await axios.get(`http://localhost:3000/student/${lesson.studentId}`);
-			lesson.student = studentResponse.data;
+			const [hours, minutes] = lesson.duration.split(' ');
+
+			totalMinutes += Number(hours.replace('h', '')) * 60 + Number(minutes.replace('m', ''));
 		}
-		lessonsStore.set(lessons);
+
+		const hours = Math.floor(totalMinutes / 60);
+		const minutes = totalMinutes % 60;
+
+		return `${hours}h ${minutes}m`;
 	};
 
 	// $: getLessons(selectedYear, selectedMonth);
@@ -143,7 +165,9 @@
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
-							<td class="whitespace-nowrap px-6 py-4 font-medium" />
+							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
+								>{getTotalDuration($lessonsStore)}</td
+							>
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
 								>Total: ${paymentTypeTotals['Cash']}</td
 							>
