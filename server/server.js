@@ -164,7 +164,8 @@ app.get("/:year/:month", async (req, res) => {
     const endDate = `${year}-${month}-${lastDayOfMonth}`; // use dynamically calculated last day of month
 
     db.all(
-        `SELECT * FROM lesson WHERE date BETWEEN '${startDate}' AND '${endDate}'`,
+        `SELECT * FROM lesson WHERE date BETWEEN ? AND ?`,
+        [startDate, endDate],
         (err, result) => {
             if (err) console.log(err);
             else res.send(result);
