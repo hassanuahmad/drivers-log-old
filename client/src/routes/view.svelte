@@ -37,6 +37,11 @@
 				);
 				lesson.student = studentResponse.data;
 			}
+
+			// Sort lessons by date
+			lessons.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+			// lessons.sort((a, b) => new Date(b.date) - new Date(a.date));
+
 			lessonsStore.set(lessons);
 		} catch (error) {
 			console.error(error);
