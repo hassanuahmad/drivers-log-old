@@ -3,10 +3,18 @@
 	import { onMount } from 'svelte';
 
 	let vehicleMaintenances = [];
+	let gasTotal = 0;
+	let maintenanceTotal = 0;
 
 	const getVehicleMaintenance = async () => {
 		const response = await axios.get('http://localhost:3000/vehicleMaintenance');
 		vehicleMaintenances = response.data;
+
+		// Calculate gas and maintenance totals
+		for (let maintenance of vehicleMaintenances) {
+			gasTotal += maintenance.gas;
+			maintenanceTotal += maintenance.maintenance;
+		}
 	};
 
 	onMount(() => {
@@ -44,6 +52,17 @@
 								<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.remarks}</td>
 							</tr>
 						{/each}
+						<tr>
+							<td class="whitespace-nowrap px-6 py-4 font-medium" />
+							<td class="whitespace-nowrap px-6 py-4 font-medium" />
+							<td class="whitespace-nowrap px-6 py-4 font-medium" />
+							<td class="whitespace-nowrap px-6 py-4 font-medium" />
+							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600">${gasTotal}</td>
+							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
+								>${maintenanceTotal}</td
+							>
+							<td class="whitespace-nowrap px-6 py-4 font-medium" />
+						</tr>
 					</tbody>
 				</table>
 			</div>
