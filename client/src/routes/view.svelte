@@ -1,7 +1,7 @@
 <script>
 	import axios from 'axios';
-	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { onMount } from 'svelte';
 
 	let lessons = [];
 	const lessonsStore = writable([]);
@@ -26,7 +26,7 @@
 		{ value: '12', name: 'December' }
 	];
 
-	const getLessons = async (selectedMonth) => {
+	const getLessons = async (selectedYear, selectedMonth) => {
 		const response = await axios.get(`http://localhost:3000/${selectedYear}/${selectedMonth}`);
 		lessons = response.data;
 
@@ -37,12 +37,29 @@
 		lessonsStore.set(lessons);
 	};
 
-	$: {
-		getLessons(selectedMonth);
-	}
+	// $: getLessons(selectedYear, selectedMonth);
+
+	// FIXME: The website crashes when the user selects a year/month that has no lessons
+
+	// subscribe to the lessonsStore and call getLessons when the store is updated
+	lessonsStore.subscribe(() => {
+		getLessons(selectedYear, selectedMonth);
+	});
+
+	// event dispatcher to dispatch 'LessonAdded' event
+	const dispatchLessonAdded = () => {
+		const event = new CustomEvent('lessonAdded');
+		dispatchEvent(event);
+	};
+
+	// call dispatchLessonAdded when component is mounted
+	onMount(() => {
+		dispatchLessonAdded();
+	});
 
 	const paymentTypes = ['Cash', 'Interac'];
 
+	// Gets the totals by Payment Type
 	$: paymentTypeTotals = paymentTypes.reduce((acc, paymentType) => {
 		const total = lessons.reduce((sum, lesson) => {
 			if (lesson.paymentType === paymentType) {

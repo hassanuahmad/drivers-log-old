@@ -2,9 +2,11 @@
 	import axios from 'axios';
 	import View from './view.svelte';
 	import { onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	let students = [];
 	let showSuccessMessage = false;
+	const dispatch = createEventDispatcher();
 
 	onMount(async () => {
 		const response = await axios.get('http://localhost:3000/student');
@@ -26,6 +28,7 @@
 		try {
 			const response = await axios.post('http://localhost:3000/', data);
 			console.log(response);
+			dispatch('lessonAdded');
 			form.reset();
 			showSuccessMessage = true;
 			setTimeout(() => {
