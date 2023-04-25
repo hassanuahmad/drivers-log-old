@@ -38,9 +38,21 @@
 				lesson.student = studentResponse.data;
 			}
 
-			// Sort lessons by date
-			lessons.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-			// lessons.sort((a, b) => new Date(b.date) - new Date(a.date));
+			// Sort lessons by date and if the date is the same, sort by time
+			lessons.sort((a, b) => {
+				const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+				if (dateComparison !== 0) {
+					return dateComparison;
+				} else {
+					const timeA = a.startTime.split(':').map(Number);
+					const timeB = b.startTime.split(':').map(Number);
+					if (timeB[0] !== timeA[0]) {
+						return timeB[0] - timeA[0];
+					} else {
+						return timeB[1] - timeA[1];
+					}
+				}
+			});
 
 			lessonsStore.set(lessons);
 		} catch (error) {
