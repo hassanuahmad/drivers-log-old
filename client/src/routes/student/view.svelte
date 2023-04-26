@@ -5,10 +5,18 @@
 	let students = [];
 	let showModal = false;
 	let deleteIndex = null;
+	let errorMessage = null;
 
 	const getStudents = async () => {
 		const response = await axios.get('http://localhost:3000/student');
 		students = response.data;
+	};
+
+	const showError = (message, duration = 5000) => {
+		errorMessage = message;
+		setTimeout(() => {
+			errorMessage = null;
+		}, duration);
 	};
 
 	const deleteRow = async (index) => {
@@ -21,7 +29,11 @@
 				console.error('Error deleting row:', response);
 			}
 		} catch (error) {
-			console.error(error);
+			if (error.response && error.response.status === 400) {
+				showError(error.response.data, 5000);
+			} else {
+				showError('An error occurred while deleting the student.', 5000);
+			}
 		}
 	};
 
@@ -43,6 +55,13 @@
 		getStudents();
 	});
 </script>
+
+<!-- Add this div to display the error message -->
+{#if errorMessage}
+	<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded my-4">
+		{errorMessage}
+	</div>
+{/if}
 
 <div class="flex flex-col">
 	<div class="overflow-x-auto sm:-mx-6 lg:-mx-8">

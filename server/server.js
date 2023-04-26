@@ -107,9 +107,32 @@ app.get("/student/:id", (req, res) => {
 
 app.delete("/student/:id", (req, res) => {
     const id = req.params.id;
-    db.run("DELETE FROM student WHERE id = ?", id, (err, result) => {
-        if (err) console.log(err);
-        else res.send(result);
+
+    // First, check if there are any lessons associated with the student
+    const checkLessons = "SELECT * FROM lesson WHERE studentId = ?";
+    db.all(checkLessons, [id], (err, lessons) => {
+        if (err) {
+            console.log(err);
+            res.status(500).send("Error checking for associated lessons");
+        } else {
+            // If there are associated lessons, send an error message
+            if (lessons.length > 0) {
+                res.status(400).send(
+                    "Cannot delete student. There are lessons associated with the student. Please delete the lessons first."
+                );
+            } else {
+                // If there are no associated lessons, delete the student
+                const deleteStudent = "DELETE FROM student WHERE id = ?";
+                db.run(deleteStudent, [id], (err, result) => {
+                    if (err) {
+                        console.log(err);
+                        res.status(500).send("Error deleting student");
+                    } else {
+                        res.status(200).send("Student deleted successfully");
+                    }
+                });
+            }
+        }
     });
 });
 
