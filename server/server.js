@@ -105,6 +105,14 @@ app.get("/student/:id", (req, res) => {
     });
 });
 
+app.delete("/student/:id", (req, res) => {
+    const id = req.params.id;
+    db.run("DELETE FROM student WHERE id = ?", id, (err, result) => {
+        if (err) console.log(err);
+        else res.send(result);
+    });
+});
+
 app.post("/", (req, res) => {
     const studentId = parseInt(req.body.selectStudent);
     const roadTest = req.body.roadTest;
