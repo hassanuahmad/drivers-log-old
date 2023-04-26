@@ -168,9 +168,11 @@
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
-							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600">${gasTotal}</td>
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
-								>${maintenanceTotal}</td
+								>Total: ${gasTotal}</td
+							>
+							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
+								>Total: ${maintenanceTotal}</td
 							>
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 						</tr>

@@ -207,6 +207,14 @@ app.get("/:year/:month", async (req, res) => {
     );
 });
 
+app.delete("/:id", (req, res) => {
+    const id = req.params.id;
+    db.run("DELETE FROM lesson WHERE id = ?", id, (err, result) => {
+        if (err) console.log(err);
+        else res.send(result);
+    });
+});
+
 app.post("/vehicleMaintenance", (req, res) => {
     const date = req.body.date;
     const odometer = req.body.odometer;
