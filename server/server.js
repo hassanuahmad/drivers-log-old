@@ -206,6 +206,14 @@ app.get("/vehicleMaintenance", (req, res) => {
     });
 });
 
+app.delete("/vehicleMaintenance/:id", (req, res) => {
+    const id = req.params.id;
+    db.run("DELETE FROM vehicleMaintenance WHERE id = ?", id, (err, result) => {
+        if (err) console.log(err);
+        else res.send(result);
+    });
+});
+
 // Close the connection to the database when the app exits
 process.on("exit", () => {
     db.close();

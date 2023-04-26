@@ -152,11 +152,11 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each $lessonsStore.reverse() as lesson}
+						{#each $lessonsStore.reverse() as lesson, index}
 							<tr
 								class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
 							>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.id}</td>
+								<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
 								<td class="whitespace-nowrap px-6 py-4 font-medium"
 									>{lesson.student.firstName} {lesson.student.lastName}</td
 								>
