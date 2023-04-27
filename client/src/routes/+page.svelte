@@ -92,7 +92,8 @@
 							required
 						>
 							<option>No</option>
-							<option>Yes</option>
+							<option>Pass</option>
+							<option>Fail</option>
 						</select>
 					</div>
 				</div>
