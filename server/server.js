@@ -245,6 +245,29 @@ app.get("/vehicleMaintenance", (req, res) => {
     });
 });
 
+app.put("/vehicleMaintenance/:id", (req, res) => {
+    const id = req.params.id;
+    const date = req.body.date;
+    const odometer = req.body.odometer;
+    const fueling = req.body.fueling;
+    const gas = req.body.gas;
+    const maintenance = req.body.maintenance;
+    const remarks = req.body.remarks;
+
+    db.run(
+        `UPDATE vehicleMaintenance SET date = ?, odometer = ?, fueling = ?, gas = ?, maintenance = ?, remarks = ? WHERE id = ?`,
+        [date, odometer, fueling, gas, maintenance, remarks, id],
+        function (err) {
+            if (err) {
+                console.log(err.message);
+                res.status(500).send("Error updating Vehicle Maintenance");
+            } else {
+                res.status(200).send("Vehicle Maintenance updated");
+            }
+        }
+    );
+});
+
 app.delete("/vehicleMaintenance/:id", (req, res) => {
     const id = req.params.id;
     db.run("DELETE FROM vehicleMaintenance WHERE id = ?", id, (err, result) => {

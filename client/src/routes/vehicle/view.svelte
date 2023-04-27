@@ -1,12 +1,14 @@
 <script>
 	import axios from 'axios';
 	import { onMount } from 'svelte';
+	import Edit from './edit.svelte';
 
 	let vehicleMaintenances = [];
 	let gasTotal = 0;
 	let maintenanceTotal = 0;
 	let showModal = false;
 	let deleteIndex = null;
+	let editingIndex = -1;
 
 	const getVehicleMaintenance = async () => {
 		const response = await axios.get('http://localhost:3000/vehicleMaintenance');
@@ -62,6 +64,14 @@
 	onMount(() => {
 		getVehicleMaintenance().then(updateTotals);
 	});
+
+	const editRowIndex = (index) => {
+		editingIndex = index;
+	};
+
+	const cancelEdit = () => {
+		editingIndex = -1;
+	};
 </script>
 
 <div class="flex flex-col">
@@ -79,24 +89,43 @@
 							<th scope="col" class="px-6 py-4">Maintenance</th>
 							<th scope="col" class="px-6 py-4">Remarks</th>
 							<th scope="col" class="px-6 py-4" />
+							<th scope="col" class="px-6 py-4" />
 						</tr>
 					</thead>
 					<tbody>
 						{#each vehicleMaintenances as vehicleMaintenance, index}
-							<tr
-								class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
-							>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
-								<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.date}</td>
-								<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.odometer}</td>
-								<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.fueling}</td>
-								<td class="whitespace-nowrap px-6 py-4">${vehicleMaintenance.gas}</td>
-								<td class="whitespace-nowrap px-6 py-4">${vehicleMaintenance.maintenance}</td>
-								<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.remarks}</td>
-								<td class="whitespace-nowrap px-6 py-4"
-									><button on:click={() => openModal(vehicleMaintenance.id)}>X</button></td
+							{#if editingIndex === vehicleMaintenance.id}
+								<Edit
+									data={vehicleMaintenance}
+									{index}
+									onCancel={cancelEdit}
+									on:updated={() => {
+										getVehicleMaintenance().then(updateTotals);
+									}}
+								/>
+							{:else}
+								<tr
+									class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
 								>
-							</tr>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
+									<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.date}</td>
+									<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.odometer}</td>
+									<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.fueling}</td>
+									<td class="whitespace-nowrap px-6 py-4">${vehicleMaintenance.gas}</td>
+									<td class="whitespace-nowrap px-6 py-4">${vehicleMaintenance.maintenance}</td>
+									<td class="whitespace-nowrap px-6 py-4">{vehicleMaintenance.remarks}</td>
+									<td class="whitespace-nowrap px-6 py-4"
+										><button on:click={() => editRowIndex(vehicleMaintenance.id)}
+											><i class="fa-regular fa-pen-to-square" style="color: #5046e5;" /></button
+										></td
+									>
+									<td class="whitespace-nowrap px-6 py-4"
+										><button on:click={() => openModal(vehicleMaintenance.id)}
+											><i class="fa-regular fa-trash-can" style="color: #5046e5;" /></button
+										></td
+									>
+								</tr>
+							{/if}
 						{/each}
 
 						{#if showModal}
