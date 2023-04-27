@@ -105,6 +105,47 @@ app.get("/student/:id", (req, res) => {
     });
 });
 
+app.put("/student/:id", (req, res) => {
+    const id = req.params.id;
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const phoneNumber = req.body.phoneNumber;
+    const streetAddress = req.body.streetAddress;
+    const email = req.body.email;
+    const drivingClass = req.body.drivingClass;
+    const remarks = req.body.remarks;
+
+    db.run(
+        `UPDATE student SET
+          firstName = ?,
+          lastName = ?,
+          phoneNumber = ?,
+          streetAddress = ?,
+          email = ?,
+          drivingClass = ?,
+          remarks = ?
+          WHERE id = ?`,
+        [
+            firstName,
+            lastName,
+            phoneNumber,
+            streetAddress,
+            email,
+            drivingClass,
+            remarks,
+            id,
+        ],
+        function (err) {
+            if (err) {
+                console.log(err.message);
+                res.status(500).send("Error updating student");
+            } else {
+                res.status(200).send("Student updated");
+            }
+        }
+    );
+});
+
 app.delete("/student/:id", (req, res) => {
     const id = req.params.id;
 
