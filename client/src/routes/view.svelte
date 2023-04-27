@@ -2,9 +2,13 @@
 	import axios from 'axios';
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
+	import Edit from './edit.svelte';
 
 	let lessons = [];
 	const lessonsStore = writable([]);
+	let showModal = false;
+	let deleteIndex = null;
+	let editingIndex = -1;
 
 	// Year/Month Dropdown
 	let selectedYear = new Date().getFullYear();
@@ -113,10 +117,6 @@
 	}, {});
 
 	// Delete Action
-
-	let showModal = false;
-	let deleteIndex = null;
-
 	const deleteRow = async (index) => {
 		try {
 			const response = await axios.delete(`http://localhost:3000/${index}`);
@@ -143,6 +143,20 @@
 	const confirmDeletion = () => {
 		deleteRow(deleteIndex);
 		closeModal();
+	};
+
+	// Edit Action
+	const editRowIndex = (index) => {
+		editingIndex = index;
+	};
+
+	const cancelEdit = () => {
+		editingIndex = -1;
+	};
+
+	const handleEditDone = () => {
+		getLessons(selectedYear, selectedMonth);
+		getTotalDuration(lessons);
 	};
 </script>
 
@@ -187,34 +201,53 @@
 							<th scope="col" class="px-6 py-4">BDE</th>
 							<th scope="col" class="px-6 py-4">Remarks</th>
 							<th scope="col" class="px-6 py-4" />
+							<th scope="col" class="px-6 py-4" />
 						</tr>
 					</thead>
 					<tbody>
 						{#each $lessonsStore.reverse() as lesson, index}
-							<tr
-								class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
-							>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
-								<td class="whitespace-nowrap px-6 py-4 font-medium"
-									>{lesson.student.firstName} {lesson.student.lastName}</td
+							{#if editingIndex === lesson.id}
+								<Edit
+									data={lesson}
+									{index}
+									onCancel={cancelEdit}
+									on:updated={() => {
+										handleEditDone;
+									}}
+								/>
+							{:else}
+								<tr
+									class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
 								>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.date}</td>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.startTime}</td>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.duration}</td>
-								{#if lesson.paymentType === 'Cash'}
-									<td class="whitespace-nowrap px-6 py-4 font-medium">${lesson.paymentAmount}</td>
-									<td class="whitespace-nowrap px-6 py-4 font-medium" />
-								{:else}
-									<td class="whitespace-nowrap px-6 py-4 font-medium" />
-									<td class="whitespace-nowrap px-6 py-4 font-medium">${lesson.paymentAmount}</td>
-								{/if}
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.roadTest}</td>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.bde}</td>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.remarks}</td>
-								<td class="whitespace-nowrap px-6 py-4"
-									><button on:click={() => openModal(lesson.id)}>X</button></td
-								>
-							</tr>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
+									<td class="whitespace-nowrap px-6 py-4 font-medium"
+										>{lesson.student.firstName} {lesson.student.lastName}</td
+									>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.date}</td>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.startTime}</td>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.duration}</td>
+									{#if lesson.paymentType === 'Cash'}
+										<td class="whitespace-nowrap px-6 py-4 font-medium">${lesson.paymentAmount}</td>
+										<td class="whitespace-nowrap px-6 py-4 font-medium" />
+									{:else}
+										<td class="whitespace-nowrap px-6 py-4 font-medium" />
+										<td class="whitespace-nowrap px-6 py-4 font-medium">${lesson.paymentAmount}</td>
+									{/if}
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.roadTest}</td>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.bde}</td>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{lesson.remarks}</td>
+									<td class="whitespace-nowrap px-6 py-4"
+										><button on:click={() => editRowIndex(lesson.id)}
+											><i class="fa-regular fa-pen-to-square" style="color: #5046e5;" /></button
+										></td
+									>
+									<td class="whitespace-nowrap px-6 py-4"
+										><button on:click={() => openModal(lesson.id)}
+											><i class="fa-regular fa-trash-can" style="color: #5046e5;" /></button
+										></td
+									>
+								</tr>
+							{/if}
 						{/each}
 
 						{#if showModal}

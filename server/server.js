@@ -248,6 +248,66 @@ app.get("/:year/:month", async (req, res) => {
     );
 });
 
+app.put("/:id", (req, res) => {
+    const id = req.params.id;
+    const studentId = req.body.studentId;
+    const roadTest = req.body.roadTest;
+    const startTime = req.body.startTime;
+    const endTime = req.body.endTime;
+    const date = req.body.date;
+    const paymentType = req.body.paymentType;
+    const paymentAmount = req.body.paymentAmount;
+    const bde = req.body.bde;
+    const remarks = req.body.remarks;
+
+    // Get the duration of the lesson
+    const start = new Date(`2000-01-01T${startTime}:00Z`);
+    const end = new Date(`2000-01-01T${endTime}:00Z`);
+    // calculate the duration in milliseconds by subtracting the start time from the end time
+    const durationInMs = end - start;
+    // convert the duration from milliseconds to hours
+    const durationInHrs = durationInMs / (1000 * 60 * 60);
+    // calculate the remaining duration in minutes
+    const durationInMins = Math.floor((durationInHrs % 1) * 60);
+    const duration = `${Math.floor(durationInHrs)}h ${durationInMins}m`;
+
+    db.run(
+        `UPDATE lesson SET
+             studentId = ?,
+             roadTest = ?,
+             startTime = ?,
+             endTime = ?,
+             date = ?,
+             duration = ?,
+             paymentType = ?,
+             paymentAmount = ?,
+             bde = ?,
+             remarks = ?
+         WHERE id = ?`,
+        [
+            studentId,
+            roadTest,
+            startTime,
+            endTime,
+            date,
+            duration,
+            paymentType,
+            paymentAmount,
+            bde,
+            remarks,
+            id,
+        ],
+        function (err) {
+            if (err) {
+                console.log(err.message);
+                res.status(500).send("Error updating lesson");
+            } else {
+                res.status(200).send("Lesson updated");
+            }
+        }
+    );
+});
+
 app.delete("/:id", (req, res) => {
     const id = req.params.id;
     db.run("DELETE FROM lesson WHERE id = ?", id, (err, result) => {
