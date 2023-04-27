@@ -94,6 +94,9 @@
 	// call dispatchLessonAdded when component is mounted
 	onMount(() => {
 		dispatchLessonAdded();
+		window.addEventListener('lessonAdded', () => {
+			getLessons(selectedYear, selectedMonth); // Fetch lessons from the database
+		});
 	});
 
 	// Gets the totals by Payment Type
@@ -287,7 +290,7 @@
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
-								>{getTotalDuration($lessonsStore)}</td
+								>Total: {getTotalDuration($lessonsStore)}</td
 							>
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
 								>Total: ${paymentTypeTotals['Cash']}</td
