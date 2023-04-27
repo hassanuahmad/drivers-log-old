@@ -1,11 +1,13 @@
 <script>
 	import axios from 'axios';
 	import { onMount } from 'svelte';
+	import Edit from './edit.svelte';
 
 	let students = [];
 	let showModal = false;
 	let deleteIndex = null;
 	let errorMessage = null;
+	let editingIndex = -1;
 
 	const getStudents = async () => {
 		const response = await axios.get('http://localhost:3000/student');
@@ -54,6 +56,14 @@
 	onMount(() => {
 		getStudents();
 	});
+
+	const editRowIndex = (index) => {
+		editingIndex = index;
+	};
+
+	const cancelEdit = () => {
+		editingIndex = -1;
+	};
 </script>
 
 <!-- Add this div to display the error message -->
@@ -79,25 +89,44 @@
 							<th scope="col" class="px-6 py-4">Class</th>
 							<th scope="col" class="px-6 py-4">Remarks</th>
 							<th scope="col" class="px-6 py-4" />
+							<th scope="col" class="px-6 py-4" />
 						</tr>
 					</thead>
 					<tbody>
 						{#each students as student, index}
-							<tr
-								class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
-							>
-								<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.firstName}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.lastName}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.phoneNumber}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.streetAddress}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.email}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.drivingClass}</td>
-								<td class="whitespace-nowrap px-6 py-4">{student.remarks}</td>
-								<td class="whitespace-nowrap px-6 py-4"
-									><button on:click={() => openModal(student.id)}>X</button></td
+							{#if editingIndex === student.id}
+								<Edit
+									data={student}
+									{index}
+									onCancel={cancelEdit}
+									on:updated={() => {
+										getStudents();
+									}}
+								/>
+							{:else}
+								<tr
+									class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-300"
 								>
-							</tr>
+									<td class="whitespace-nowrap px-6 py-4 font-medium">{index + 1}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.firstName}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.lastName}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.phoneNumber}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.streetAddress}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.email}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.drivingClass}</td>
+									<td class="whitespace-nowrap px-6 py-4">{student.remarks}</td>
+									<td class="whitespace-nowrap px-6 py-4"
+										><button on:click={() => editRowIndex(student.id)}
+											><i class="fa-regular fa-pen-to-square" style="color: #5046e5;" /></button
+										></td
+									>
+									<td class="whitespace-nowrap px-6 py-4"
+										><button on:click={() => openModal(student.id)}
+											><i class="fa-regular fa-trash-can" style="color: #5046e5;" /></button
+										></td
+									>
+								</tr>
+							{/if}
 						{/each}
 
 						{#if showModal}
