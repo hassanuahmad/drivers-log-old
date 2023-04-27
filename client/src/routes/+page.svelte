@@ -11,6 +11,17 @@
 	onMount(async () => {
 		const response = await axios.get('http://localhost:3000/student');
 		students = response.data;
+
+		// Sort the students in alphabetical order by their first name
+		students.sort((a, b) => {
+			if (a.firstName.toLowerCase() < b.firstName.toLowerCase()) {
+				return 1;
+			}
+			if (a.firstName.toLowerCase() > b.firstName.toLowerCase()) {
+				return -1;
+			}
+			return 0;
+		});
 	});
 
 	const submit = async () => {
