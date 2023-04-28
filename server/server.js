@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
+const moment = require("moment");
+
 const app = express();
 
 app.use(cors());
@@ -245,16 +247,28 @@ app.post("/", (req, res) => {
     const bde = req.body.bde;
     const remarks = req.body.remarks;
 
+    // // Get the duration of the lesson
+    // const start = new Date(`2000-01-01T${startTime}:00Z`);
+    // const end = new Date(`2000-01-01T${endTime}:00Z`);
+    // // calculate the duration in milliseconds by subtracting the start time from the end time
+    // const durationInMs = end - start;
+    // // convert the duration from milliseconds to hours
+    // const durationInHrs = durationInMs / (1000 * 60 * 60);
+    // // calculate the remaining duration in minutes
+    // const durationInMins = Math.floor((durationInHrs % 1) * 60);
+    // const duration = `${Math.floor(durationInHrs)}h ${durationInMins}m`;
+
     // Get the duration of the lesson
-    const start = new Date(`2000-01-01T${startTime}:00Z`);
-    const end = new Date(`2000-01-01T${endTime}:00Z`);
-    // calculate the duration in milliseconds by subtracting the start time from the end time
-    const durationInMs = end - start;
-    // convert the duration from milliseconds to hours
-    const durationInHrs = durationInMs / (1000 * 60 * 60);
-    // calculate the remaining duration in minutes
-    const durationInMins = Math.floor((durationInHrs % 1) * 60);
-    const duration = `${Math.floor(durationInHrs)}h ${durationInMins}m`;
+    const startDateTime = moment(`${date}T${startTime}`);
+    const endDateTime = moment(`${date}T${endTime}`);
+
+    console.log(startDateTime, endDateTime);
+
+    const totalTuration = moment.duration(endDateTime.diff(startDateTime));
+    const durationHours = Math.floor(totalTuration.asHours());
+    const durationMinutes = Math.floor(totalTuration.asMinutes()) % 60;
+
+    const duration = `${durationHours}h ${durationMinutes}m`;
 
     db.run(
         `INSERT INTO lesson (studentId, roadTest, startTime, endTime, date, duration, paymentType, paymentAmount, bde, remarks)
