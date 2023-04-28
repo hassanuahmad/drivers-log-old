@@ -2,4 +2,5 @@
 	<a href="/">Home</a>
 	<a href="/student" class="pl-4">Students</a>
 	<a href="/vehicle" class="pl-4">Vehicle Maintenance</a>
+	<a href="/yearView" class="pl-4">Yearly View</a>
 </div>

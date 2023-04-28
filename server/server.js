@@ -177,6 +177,26 @@ app.delete("/student/:id", (req, res) => {
     });
 });
 
+app.get("/yearView/:year", async (req, res) => {
+    console.log("Year route called");
+
+    const { year } = req.params;
+
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    console.log(year, startDate, endDate);
+
+    db.all(
+        `SELECT * FROM lesson WHERE date BETWEEN ? AND ?`,
+        [startDate, endDate],
+        (err, result) => {
+            if (err) console.log(err);
+            else res.send(result);
+        }
+    );
+});
+
 app.post("/", (req, res) => {
     const studentId = parseInt(req.body.selectStudent);
     const roadTest = req.body.roadTest;
