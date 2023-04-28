@@ -7,8 +7,6 @@
 	export let index;
 	export let onCancel;
 
-	console.log(data);
-
 	let updatedData = { ...data };
 	const dispatch = createEventDispatcher();
 
