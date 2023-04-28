@@ -366,6 +366,22 @@ app.get("/vehicleMaintenance", (req, res) => {
     });
 });
 
+app.get("/vehicleMaintenance/:year/:month", async (req, res) => {
+    const { year, month } = req.params;
+    const lastDayOfMonth = new Date(year, month, 0).getDate(); // calculate last day of month dynamically
+    const startDate = `${year}-${month}-01`;
+    const endDate = `${year}-${month}-${lastDayOfMonth}`; // use dynamically calculated last day of month
+
+    db.all(
+        `SELECT * FROM vehicleMaintenance WHERE date BETWEEN ? AND ?`,
+        [startDate, endDate],
+        (err, result) => {
+            if (err) console.log(err);
+            else res.send(result);
+        }
+    );
+});
+
 app.put("/vehicleMaintenance/:id", (req, res) => {
     const id = req.params.id;
     const date = req.body.date;
