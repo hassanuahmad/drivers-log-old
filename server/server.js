@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const moment = require("moment");
+const momentTZ = require("moment-timezone");
+const { google } = require("googleapis");
 
 const app = express();
 
@@ -236,7 +238,51 @@ app.get("/yearView/:year", async (req, res) => {
     }
 });
 
-app.post("/", (req, res) => {
+let accessToken =
+    "ya29.a0AWY7Ckllun6OI44EZEAgrGipzJIhFxIIA7ER9xnv4sB8wZ55YUkFOi9LAgTFRRh9pN_qU7LaiTUUQvRk6AL8LTc3TstxqvmaQzHZSNITGt-jz9nmkW4eU-V363jxhPDFH54dNIdyJD1-9dwddEh28-zfXY3baCgYKAWESARMSFQG1tDrpgMK2Fu5QZrf4rKMvnmZlAQ0163";
+
+let YOUR_CLIENT_ID =
+    "592944968932-p2h545v765tak1io9m2bqoug4fvkp2c9.apps.googleusercontent.com";
+let YOUR_CLIENT_SECRET = "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";
+let YOUR_REDIRECT_URL = "http://localhost:5173";
+
+const SCOPES = "https://www.googleapis.com/auth/calendar";
+
+const oauth2Client = new google.auth.OAuth2(
+    YOUR_CLIENT_ID,
+    YOUR_CLIENT_SECRET,
+    YOUR_REDIRECT_URL
+);
+
+app.post("/setAccessToken", (req, res) => {
+    // accessToken = req.body.accessToken;
+    // console.log("Received access token from endpoint:", accessToken);
+    oauth2Client.setCredentials({ access_token: accessToken });
+    console.log("Set credentials", oauth2Client.credentials);
+    res.sendStatus(200);
+});
+
+// this function will return the detail of the student with the given id for the event
+const getStudentInfo = (studentId) => {
+    return new Promise((resolve, reject) => {
+        db.get(
+            `SELECT * FROM student WHERE id = ?`,
+            [studentId],
+            (err, student) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    if (!student) {
+                        reject(new Error("Student not found"));
+                    }
+                    resolve(student);
+                }
+            }
+        );
+    });
+};
+
+app.post("/", async (req, res) => {
     const studentId = parseInt(req.body.selectStudent);
     const roadTest = req.body.roadTest;
     const startTime = req.body.startTime;
@@ -247,22 +293,9 @@ app.post("/", (req, res) => {
     const bde = req.body.bde;
     const remarks = req.body.remarks;
 
-    // // Get the duration of the lesson
-    // const start = new Date(`2000-01-01T${startTime}:00Z`);
-    // const end = new Date(`2000-01-01T${endTime}:00Z`);
-    // // calculate the duration in milliseconds by subtracting the start time from the end time
-    // const durationInMs = end - start;
-    // // convert the duration from milliseconds to hours
-    // const durationInHrs = durationInMs / (1000 * 60 * 60);
-    // // calculate the remaining duration in minutes
-    // const durationInMins = Math.floor((durationInHrs % 1) * 60);
-    // const duration = `${Math.floor(durationInHrs)}h ${durationInMins}m`;
-
     // Get the duration of the lesson
     const startDateTime = moment(`${date}T${startTime}`);
     const endDateTime = moment(`${date}T${endTime}`);
-
-    console.log(startDateTime, endDateTime);
 
     const totalTuration = moment.duration(endDateTime.diff(startDateTime));
     const durationHours = Math.floor(totalTuration.asHours());
@@ -290,10 +323,55 @@ app.post("/", (req, res) => {
                 console.log(err.message);
                 res.status(500).send("Error saving lesson");
             } else {
-                res.status(200).send("Lesson saved");
+                console.log("Lesson saved");
+                // res.status(200).send("Lesson saved");
             }
         }
     );
+
+    try {
+        // const scopes = ["https://www.googleapis.com/auth/calendar"];
+
+        const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+        // Create a new instance of the Google API client with the access token
+        console.log("Access token in the POST request:", accessToken);
+
+        const studentInfo = await getStudentInfo(studentId);
+
+        // Get the date, time and timezone of the start and end of the lesson for the Calendar API event
+        const startTimeInTimeZone = momentTZ
+            .tz(`${date}T${startTime}`, "America/Toronto")
+            .format();
+        const endTimeInTimeZone = momentTZ
+            .tz(`${date}T${endTime}`, "America/Toronto")
+            .format();
+
+        const eventData = {
+            summary: `${studentInfo.firstName} ${studentInfo.lastName}`,
+            location: `${studentInfo.streetAddress}`,
+            description: `${remarks}`,
+            start: {
+                dateTime: startTimeInTimeZone,
+                timeZone: "America/Toronto",
+            },
+            end: {
+                dateTime: endTimeInTimeZone,
+                timeZone: "America/Toronto",
+            },
+        };
+
+        await calendar.events.insert({
+            calendarId: "primary",
+            resource: eventData,
+        });
+
+        console.log(`Event created!`);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("Error creating event:", error);
+        res.sendStatus(500);
+    }
 });
 
 app.get("/", (req, res) => {
