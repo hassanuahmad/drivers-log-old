@@ -4,6 +4,7 @@ const sqlite3 = require("sqlite3").verbose();
 const moment = require("moment");
 const momentTZ = require("moment-timezone");
 const { google } = require("googleapis");
+require("dotenv").config();
 
 const app = express();
 
@@ -238,29 +239,30 @@ app.get("/yearView/:year", async (req, res) => {
     }
 });
 
-let accessToken =
-    "ya29.a0AWY7Ckllun6OI44EZEAgrGipzJIhFxIIA7ER9xnv4sB8wZ55YUkFOi9LAgTFRRh9pN_qU7LaiTUUQvRk6AL8LTc3TstxqvmaQzHZSNITGt-jz9nmkW4eU-V363jxhPDFH54dNIdyJD1-9dwddEh28-zfXY3baCgYKAWESARMSFQG1tDrpgMK2Fu5QZrf4rKMvnmZlAQ0163";
-
-let YOUR_CLIENT_ID =
-    "592944968932-p2h545v765tak1io9m2bqoug4fvkp2c9.apps.googleusercontent.com";
-let YOUR_CLIENT_SECRET = "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";
-let YOUR_REDIRECT_URL = "http://localhost:5173";
-
 const SCOPES = "https://www.googleapis.com/auth/calendar";
+// refresh the access token after 45ish minutes
+const refreshToken = process.env.REFRESH_TOKEN;
+let accessToken;
 
 const oauth2Client = new google.auth.OAuth2(
-    YOUR_CLIENT_ID,
-    YOUR_CLIENT_SECRET,
-    YOUR_REDIRECT_URL
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    process.env.REDIRECT_URL
 );
 
-app.post("/setAccessToken", (req, res) => {
-    // accessToken = req.body.accessToken;
-    // console.log("Received access token from endpoint:", accessToken);
-    oauth2Client.setCredentials({ access_token: accessToken });
-    console.log("Set credentials", oauth2Client.credentials);
-    res.sendStatus(200);
+oauth2Client.setCredentials({
+    refresh_token: refreshToken,
 });
+
+// app.post("/auth", async (req, res) => {
+//     accessToken = req.body.accessToken;
+//     const url = oauth2Client.generateAuthUrl({
+//         access_type: "offline",
+//         scope: SCOPES,
+//     });
+//     console.log("URL:", url);
+//     res.redirect(url);
+// });
 
 // this function will return the detail of the student with the given id for the event
 const getStudentInfo = (studentId) => {
@@ -330,13 +332,6 @@ app.post("/", async (req, res) => {
     );
 
     try {
-        // const scopes = ["https://www.googleapis.com/auth/calendar"];
-
-        const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-
-        // Create a new instance of the Google API client with the access token
-        console.log("Access token in the POST request:", accessToken);
-
         const studentInfo = await getStudentInfo(studentId);
 
         // Get the date, time and timezone of the start and end of the lesson for the Calendar API event
@@ -361,8 +356,11 @@ app.post("/", async (req, res) => {
             },
         };
 
+        const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
         await calendar.events.insert({
             calendarId: "primary",
+            auth: oauth2Client,
             resource: eventData,
         });
 
@@ -372,13 +370,6 @@ app.post("/", async (req, res) => {
         console.error("Error creating event:", error);
         res.sendStatus(500);
     }
-});
-
-app.get("/", (req, res) => {
-    db.all("SELECT * FROM lesson", (err, result) => {
-        if (err) console.log(err);
-        else res.send(result);
-    });
 });
 
 app.get("/:year/:month", async (req, res) => {
