@@ -12,19 +12,19 @@
 			callback: async (response) => {
 				if (response.credential) {
 					const accessToken = response.credential;
-					console.log('Access token from frontend:', accessToken);
+
 					// Send the access token and refresh token to the backend
-					await axios.post('http://localhost:3000/setAccessToken', {
-						accessToken
-					});
+					await axios.post('http://localhost:3000/auth', {accessToken});
 				} else {
 					console.error('Error:', response);
 				}
 			}
 		});
 
+		const googleBtn = document.getElementById('google-signin-button');
+
 		//@ts-ignore
-		window.google.accounts.id.renderButton(document.getElementById('google-signin-button'), {
+		window.google.accounts.id.renderButton(googleBtn, {
 			theme: 'outline',
 			size: 'large'
 		});
