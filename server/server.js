@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const moment = require("moment");
+const momentTZ = require("moment-timezone");
+const { google } = require("googleapis");
+require("dotenv").config();
 
 const app = express();
 
@@ -236,7 +239,52 @@ app.get("/yearView/:year", async (req, res) => {
     }
 });
 
-app.post("/", (req, res) => {
+const SCOPES = "https://www.googleapis.com/auth/calendar";
+// refresh the access token after 45ish minutes
+const refreshToken = process.env.REFRESH_TOKEN;
+let accessToken;
+
+const oauth2Client = new google.auth.OAuth2(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    process.env.REDIRECT_URL
+);
+
+oauth2Client.setCredentials({
+    refresh_token: refreshToken,
+});
+
+// app.post("/auth", async (req, res) => {
+//     accessToken = req.body.accessToken;
+//     const url = oauth2Client.generateAuthUrl({
+//         access_type: "offline",
+//         scope: SCOPES,
+//     });
+//     console.log("URL:", url);
+//     res.redirect(url);
+// });
+
+// this function will return the detail of the student with the given id for the event
+const getStudentInfo = (studentId) => {
+    return new Promise((resolve, reject) => {
+        db.get(
+            `SELECT * FROM student WHERE id = ?`,
+            [studentId],
+            (err, student) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    if (!student) {
+                        reject(new Error("Student not found"));
+                    }
+                    resolve(student);
+                }
+            }
+        );
+    });
+};
+
+app.post("/", async (req, res) => {
     const studentId = parseInt(req.body.selectStudent);
     const roadTest = req.body.roadTest;
     const startTime = req.body.startTime;
@@ -247,22 +295,9 @@ app.post("/", (req, res) => {
     const bde = req.body.bde;
     const remarks = req.body.remarks;
 
-    // // Get the duration of the lesson
-    // const start = new Date(`2000-01-01T${startTime}:00Z`);
-    // const end = new Date(`2000-01-01T${endTime}:00Z`);
-    // // calculate the duration in milliseconds by subtracting the start time from the end time
-    // const durationInMs = end - start;
-    // // convert the duration from milliseconds to hours
-    // const durationInHrs = durationInMs / (1000 * 60 * 60);
-    // // calculate the remaining duration in minutes
-    // const durationInMins = Math.floor((durationInHrs % 1) * 60);
-    // const duration = `${Math.floor(durationInHrs)}h ${durationInMins}m`;
-
     // Get the duration of the lesson
     const startDateTime = moment(`${date}T${startTime}`);
     const endDateTime = moment(`${date}T${endTime}`);
-
-    console.log(startDateTime, endDateTime);
 
     const totalTuration = moment.duration(endDateTime.diff(startDateTime));
     const durationHours = Math.floor(totalTuration.asHours());
@@ -290,17 +325,51 @@ app.post("/", (req, res) => {
                 console.log(err.message);
                 res.status(500).send("Error saving lesson");
             } else {
-                res.status(200).send("Lesson saved");
+                console.log("Lesson saved");
+                // res.status(200).send("Lesson saved");
             }
         }
     );
-});
 
-app.get("/", (req, res) => {
-    db.all("SELECT * FROM lesson", (err, result) => {
-        if (err) console.log(err);
-        else res.send(result);
-    });
+    try {
+        const studentInfo = await getStudentInfo(studentId);
+
+        // Get the date, time and timezone of the start and end of the lesson for the Calendar API event
+        const startTimeInTimeZone = momentTZ
+            .tz(`${date}T${startTime}`, "America/Toronto")
+            .format();
+        const endTimeInTimeZone = momentTZ
+            .tz(`${date}T${endTime}`, "America/Toronto")
+            .format();
+
+        const eventData = {
+            summary: `${studentInfo.firstName} ${studentInfo.lastName}`,
+            location: `${studentInfo.streetAddress}`,
+            description: `${remarks}`,
+            start: {
+                dateTime: startTimeInTimeZone,
+                timeZone: "America/Toronto",
+            },
+            end: {
+                dateTime: endTimeInTimeZone,
+                timeZone: "America/Toronto",
+            },
+        };
+
+        const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+        await calendar.events.insert({
+            calendarId: "primary",
+            auth: oauth2Client,
+            resource: eventData,
+        });
+
+        console.log(`Event created!`);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("Error creating event:", error);
+        res.sendStatus(500);
+    }
 });
 
 app.get("/:year/:month", async (req, res) => {

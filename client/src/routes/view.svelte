@@ -64,6 +64,54 @@
 		}
 	};
 
+	// this function downloads the lessons array as a CSV file
+	const downloadCSV = () => {
+		console.log('lesson', lessons);
+		const csvData = convertToCSV(lessons);
+		const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(csvBlob);
+		const downloadLink = document.createElement('a');
+		downloadLink.href = csvUrl;
+		downloadLink.download = 'lessons.csv';
+		downloadLink.click();
+		URL.revokeObjectURL(csvUrl);
+	};
+
+	const convertToCSV = (data) => {
+		const headers = [
+			'Name',
+			'Date',
+			'Payment Type',
+			'Payment Amount',
+			'Start Time',
+			'End Time',
+			'Duration',
+			'Road Test',
+			'BDE',
+			'Address',
+			'Phone Number',
+			'Remarks'
+		];
+		const csvRows = data.map((lesson) => {
+			return [
+				lesson.student.firstName + lesson.student.lastName,
+				lesson.date,
+				lesson.paymentType,
+				lesson.paymentAmount,
+				lesson.startTime,
+				lesson.endTime,
+				lesson.duration,
+				lesson.roadTest,
+				lesson.bde,
+				lesson.student.streetAddress,
+				lesson.student.phoneNumber,
+				lesson.remarks
+			].join(',');
+		});
+
+		return [headers.join(','), ...csvRows].join('\n');
+	};
+
 	// get the total duration of all lessons
 	const getTotalDuration = (lessons) => {
 		let totalMinutes = 0;
@@ -185,6 +233,13 @@
 						<option value={month.value}>{month.name}</option>
 					{/each}
 				</select>
+			</div>
+			<div class="mt-6 flex items-center gap-x-6">
+				<button
+					type="submit"
+					class="rounded-md bg-indigo-600 px-8 py-3 text-md font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+					on:click={downloadCSV}>Download CSV</button
+				>
 			</div>
 			<div class="overflow-hidden">
 				<table class="min-w-full text-left text-sm font-light">
@@ -331,6 +386,7 @@
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
 								>Total: ${paymentTypeTotals['Interac']}</td
 							>
+							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 						</tr>

@@ -4,6 +4,6 @@
 </script>
 
 <div class="max-w-7xl mx-auto">
-	<Navbar />
+	<Navbar data />
 	<slot />
 </div>
