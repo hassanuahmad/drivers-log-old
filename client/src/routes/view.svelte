@@ -35,13 +35,6 @@
 			const response = await axios.get(`http://localhost:3000/${selectedYear}/${selectedMonth}`);
 			lessons = response.data || [];
 
-			for (let lesson of lessons) {
-				const studentResponse = await axios.get(
-					`http://localhost:3000/student/${lesson.studentId}`
-				);
-				lesson.student = studentResponse.data;
-			}
-
 			// Sort lessons by date and if the date is the same, sort by time
 			lessons.sort((a, b) => {
 				const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -144,12 +137,20 @@
 	};
 
 	// call dispatchLessonAdded when component is mounted
+	// onMount(() => {
+	// 	dispatchLessonAdded();
+	// 	window.addEventListener('lessonAdded', () => {
+	// 		getLessons(selectedYear, selectedMonth); // Fetch lessons from the database
+	// 	});
+	// });
 	onMount(() => {
-		dispatchLessonAdded();
-		window.addEventListener('lessonAdded', () => {
-			getLessons(selectedYear, selectedMonth); // Fetch lessons from the database
-		});
-	});
+    getLessons(selectedYear, selectedMonth); // Call getLessons initially when the component mounts
+
+    dispatchLessonAdded();
+    window.addEventListener('lessonAdded', () => {
+        getLessons(selectedYear, selectedMonth); // Fetch lessons from the database
+    });
+});
 
 	// Gets the totals by Payment Type
 	const paymentTypes = ['Cash', 'Interac'];
@@ -195,6 +196,7 @@
 
 	// Edit Action
 	const editRowIndex = (index) => {
+		console.log('editRowIndex index', index);
 		editingIndex = index;
 	};
 
