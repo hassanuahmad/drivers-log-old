@@ -1,7 +1,7 @@
 <script>
-	import axios from 'axios';
-	import { onMount } from 'svelte';
 	import Edit from './edit.svelte';
+	import { getVehicleMaintenance, updateTotals } from './utils';
+	import { deleteRow } from '../utils/deleteUtil';
 
 	let vehicleMaintenances = [];
 	let gasTotal = 0;
@@ -29,42 +29,35 @@
 		{ value: '12', name: 'December' }
 	];
 
-	const getVehicleMaintenance = async (selectedYear, selectedMonth) => {
-		const response = await axios.get(
-			`http://localhost:3000/vehicleMaintenance/${selectedYear}/${selectedMonth}`
+	// fetch the vehicle maintenance data from utils.js
+	const fetchVehicleMaintenance = async () => {
+		const [maintenances, gas, maintenance] = await getVehicleMaintenance(
+			selectedYear,
+			selectedMonth
 		);
-		vehicleMaintenances = response.data;
-
-		// Calculate gas and maintenance totals
-		for (let maintenance of vehicleMaintenances) {
-			gasTotal += maintenance.gas;
-			maintenanceTotal += maintenance.maintenance;
-		}
+		vehicleMaintenances = maintenances;
+		gasTotal = gas;
+		maintenanceTotal = maintenance;
 	};
 
-	// update total after a row is deleted
-	const updateTotals = () => {
-		gasTotal = 0;
-		maintenanceTotal = 0;
+	// fetch the updated gas and maintenance totals from utils.js
+	const fetchUpdatedTotals = (updatedArray) => {
+		const [gas, maintenance] = updateTotals(updatedArray);
 
-		for (let maintenance of vehicleMaintenances) {
-			gasTotal += maintenance.gas;
-			maintenanceTotal += maintenance.maintenance;
-		}
+		gasTotal = gas;
+		maintenanceTotal = maintenance;
 	};
 
-	const deleteRow = async (index) => {
-		try {
-			const response = await axios.delete(`http://localhost:3000/vehicleMaintenance/${index}`);
+	$: if (selectedMonth && selectedYear) {
+		fetchVehicleMaintenance();
+	}
 
-			if (response.status === 200 || response.status === 204) {
-				vehicleMaintenances = vehicleMaintenances.filter((val) => val.id !== index);
-				updateTotals();
-			} else {
-				console.error('Error deleting row:', response);
-			}
-		} catch (error) {
-			console.error(error);
+	const confirmDeletion = async () => {
+		const success = await deleteRow('http://localhost:3000/vehicleMaintenance', deleteIndex);
+		if (success) {
+			vehicleMaintenances = vehicleMaintenances.filter((val) => val.id !== deleteIndex);
+			fetchUpdatedTotals(vehicleMaintenances);
+			closeModal();
 		}
 	};
 
@@ -76,13 +69,6 @@
 	const closeModal = () => {
 		showModal = false;
 	};
-
-	const confirmDeletion = () => {
-		deleteRow(deleteIndex);
-		closeModal();
-	};
-
-	$: getVehicleMaintenance(selectedYear, selectedMonth).then(updateTotals);
 
 	const editRowIndex = (index) => {
 		editingIndex = index;
@@ -142,7 +128,7 @@
 									{index}
 									onCancel={cancelEdit}
 									on:updated={() => {
-										getVehicleMaintenance().then(updateTotals);
+										fetchVehicleMaintenance();
 									}}
 								/>
 							{:else}

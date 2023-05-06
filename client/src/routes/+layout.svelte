@@ -3,7 +3,7 @@
 	import Navbar from './navbar.svelte';
 </script>
 
-<div class="max-w-7xl mx-auto">
+<div class="mx-12">
 	<Navbar />
 	<slot />
 </div>
