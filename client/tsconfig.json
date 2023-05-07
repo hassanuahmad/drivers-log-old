@@ -10,7 +10,11 @@
 		"sourceMap": true,
 		// TODO: enable this later
 		// "strict": true, :
-		"strict": false
+		"strict": false,
+		/** TODO: dont really know what this does
+		had an error saying 'because it would overwrite input file.'
+		*/
+		"outDir": "dist"
 	}
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
 	//
