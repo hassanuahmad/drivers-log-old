@@ -1,5 +1,12 @@
 <script>
-	import axios from 'axios';
+	import {
+		getYearlyData,
+		getTotalDuration,
+		getPassedRoadTests,
+		getTotalPaymentAmount,
+		getTotalGasAmount,
+		getTotalMaintenanceAmount
+	} from './utils';
 
 	let selectedYear = new Date().getFullYear();
 	let years = [selectedYear, selectedYear + 1, selectedYear + 2, selectedYear + 3];
@@ -8,58 +15,19 @@
 	let uniqueStudentCount;
 	let maintenances = [];
 
-	const getYearlyData = async (selectedYear) => {
-		try {
-			const response = await axios.get(`http://localhost:3000/yearView/${selectedYear}`);
+	const fetchYearlyData = async () => {
+		const [yearlyLessons, yearlyUniqueStudentCount, yearlyMaintenances] = await getYearlyData(
+			selectedYear
+		);
 
-			lessons = response.data.lessons;
-			uniqueStudentCount = response.data.uniqueStudentCount;
-			maintenances = response.data.maintenance;
-		} catch (err) {
-			console.error('Error fetching data:', err);
-		}
+		lessons = yearlyLessons;
+		uniqueStudentCount = yearlyUniqueStudentCount;
+		maintenances = yearlyMaintenances;
 	};
 
-	// get the total duration of all lessons
-	const getTotalDuration = (lessons) => {
-		let totalMinutes = 0;
-
-		for (let lesson of lessons) {
-			const [hours, minutes] = lesson.duration.split(' ');
-
-			totalMinutes += Number(hours.replace('h', '')) * 60 + Number(minutes.replace('m', ''));
-		}
-
-		const hours = Math.floor(totalMinutes / 60);
-		const minutes = totalMinutes % 60;
-
-		return `${hours}h ${minutes}m`;
-	};
-
-	// get the total road test "Pass" students
-	const getPassedRoadTests = (lessons) => {
-		return lessons.filter((lesson) => lesson.roadTest === 'Pass').length;
-	};
-
-	// get the total payment amount
-	const getTotalPaymentAmount = (lessons) => {
-		const total = lessons.reduce((accumulator, lesson) => {
-			return accumulator + parseFloat(lesson.paymentAmount);
-		}, 0);
-
-		return total;
-	};
-
-	// get the total payment amount
-	const getTotalGasAmount = (maintenance) => {
-		const total = maintenance.reduce((accumulator, maintenanceItem) => {
-			return accumulator + parseInt(maintenanceItem.gas, 10);
-		}, 0);
-
-		return total;
-	};
-
-	$: getYearlyData(selectedYear);
+	$: if (selectedYear) {
+		fetchYearlyData();
+	}
 </script>
 
 <div class="flex items-center">
@@ -92,28 +60,33 @@
 				</dd>
 			</div>
 			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
+				<dt class="text-base leading-7 text-gray-600">Students</dt>
+				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+					{uniqueStudentCount}
+				</dd>
+			</div>
+			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
 				<dt class="text-base leading-7 text-gray-600">Total Amount</dt>
 				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
 					${getTotalPaymentAmount(lessons)}
 				</dd>
 			</div>
 			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
-				<dt class="text-base leading-7 text-gray-600">Students Passed the Road Test</dt>
-				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-					{getPassedRoadTests(lessons)}
-				</dd>
-			</div>
-			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
-				<dt class="text-base leading-7 text-gray-600">Students</dt>
-				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-					{uniqueStudentCount}
-				</dd>
-			</div>
-
-			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
 				<dt class="text-base leading-7 text-gray-600">Payed for Gas</dt>
 				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
 					${getTotalGasAmount(maintenances)}
+				</dd>
+			</div>
+			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
+				<dt class="text-base leading-7 text-gray-600">Payed for Maintenance</dt>
+				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+					${getTotalMaintenanceAmount(maintenances)}
+				</dd>
+			</div>
+			<div class="mx-auto flex max-w-xs flex-col gap-y-4">
+				<dt class="text-base leading-7 text-gray-600">Students Passed the Road Test</dt>
+				<dd class="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+					{getPassedRoadTests(lessons)}
 				</dd>
 			</div>
 		</dl>
