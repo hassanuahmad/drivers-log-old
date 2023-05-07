@@ -5,13 +5,21 @@ export const deleteRow = async (url, index) => {
 		const response = await axios.delete(`${url}/${index}`);
 
 		if (response.status === 200 || response.status === 204) {
-			return true;
+			return { success: true };
 		} else {
-			console.error('Error deleting row:', response);
-			return false;
+			return {
+				success: false,
+				message: response.statusText || 'An error occurred while deleting the row.'
+			};
 		}
 	} catch (error) {
-		console.error(error);
-		return false;
+		if (error.response && error.response.status === 400) {
+			return {
+				success: false,
+				message: error.response.data || 'An error occurred while deleting the row.'
+			};
+		} else {
+			return { success: false, message: 'An error occurred while deleting the row.' };
+		}
 	}
 };

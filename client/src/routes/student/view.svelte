@@ -1,6 +1,7 @@
 <script>
-	import axios from 'axios';
 	import { onMount } from 'svelte';
+	import { getStudents } from './utils';
+	import { deleteRow } from '../utils/deleteUtil';
 	import Edit from './edit.svelte';
 
 	let students = [];
@@ -9,9 +10,9 @@
 	let errorMessage = null;
 	let editingIndex = -1;
 
-	const getStudents = async () => {
-		const response = await axios.get('http://localhost:3000/student');
-		students = response.data;
+	const fetchStudents = async () => {
+		const response = await getStudents();
+		students = response;
 	};
 
 	const showError = (message, duration = 5000) => {
@@ -21,23 +22,20 @@
 		}, duration);
 	};
 
-	const deleteRow = async (index) => {
-		try {
-			const response = await axios.delete(`http://localhost:3000/student/${index}`);
+	const confirmDeletion = async () => {
+		const { success, message } = await deleteRow('http://localhost:3000/student', deleteIndex);
 
-			if (response.status === 200 || response.status === 204) {
-				students = students.filter((val) => val.id !== index);
-			} else {
-				console.error('Error deleting row:', response);
-			}
-		} catch (error) {
-			if (error.response && error.response.status === 400) {
-				showError(error.response.data, 5000);
-			} else {
-				showError('An error occurred while deleting the student.', 5000);
-			}
+		if (success) {
+			students = students.filter((val) => val.id !== deleteIndex);
+		} else {
+			showError(message, 5000);
 		}
+		closeModal();
 	};
+
+	onMount(() => {
+		fetchStudents();
+	});
 
 	const openModal = (index) => {
 		deleteIndex = index;
@@ -47,15 +45,6 @@
 	const closeModal = () => {
 		showModal = false;
 	};
-
-	const confirmDeletion = () => {
-		deleteRow(deleteIndex);
-		closeModal();
-	};
-
-	onMount(() => {
-		getStudents();
-	});
 
 	const editRowIndex = (index) => {
 		editingIndex = index;

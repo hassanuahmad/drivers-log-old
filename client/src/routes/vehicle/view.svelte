@@ -53,7 +53,7 @@
 	}
 
 	const confirmDeletion = async () => {
-		const success = await deleteRow('http://localhost:3000/vehicleMaintenance', deleteIndex);
+		const { success } = await deleteRow('http://localhost:3000/vehicleMaintenance', deleteIndex);
 		if (success) {
 			vehicleMaintenances = vehicleMaintenances.filter((val) => val.id !== deleteIndex);
 			fetchUpdatedTotals(vehicleMaintenances);
