@@ -3,11 +3,9 @@
 	import View from './view.svelte';
 	import { onMount } from 'svelte';
 	import { refreshLessons } from './utils';
-	import { createEventDispatcher } from 'svelte';
 
 	let students = [];
 	let showSuccessMessage = false;
-	const dispatch = createEventDispatcher();
 
 	onMount(async () => {
 		const response = await axios.get('http://localhost:3000/student');

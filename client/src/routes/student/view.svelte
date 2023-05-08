@@ -5,6 +5,7 @@
 	import Edit from './edit.svelte';
 
 	let students = [];
+
 	let showModal = false;
 	let deleteIndex = null;
 	let errorMessage = null;
@@ -89,7 +90,7 @@
 									{index}
 									onCancel={cancelEdit}
 									on:updated={() => {
-										getStudents();
+										fetchStudents();
 									}}
 								/>
 							{:else}
