@@ -1,11 +1,15 @@
 <script>
-	import axios from 'axios';
 	import { writable } from 'svelte/store';
-	import { onMount } from 'svelte';
+	import { getLessons, getTotalDuration, getPaymentTypeTotals } from './utils';
+	import { deleteRow } from './utils/deleteUtil';
 	import Edit from './edit.svelte';
 
 	let lessons = [];
 	const lessonsStore = writable([]);
+	let cashAmount = 0;
+	let interacAmount = 0;
+	let totalDuration = null;
+
 	let showModal = false;
 	let deleteIndex = null;
 	let editingIndex = -1;
@@ -30,42 +34,39 @@
 		{ value: '12', name: 'December' }
 	];
 
-	const getLessons = async (selectedYear, selectedMonth) => {
-		try {
-			const response = await axios.get(`http://localhost:3000/${selectedYear}/${selectedMonth}`);
-			lessons = response.data || [];
+	const fetchLessons = async () => {
+		lessons = await getLessons(selectedYear, selectedMonth);
+		lessonsStore.set(lessons);
+	};
 
-			// Sort lessons by date and if the date is the same, sort by time
-			lessons.sort((a, b) => {
-				const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
-				if (dateComparison !== 0) {
-					return dateComparison;
-				} else {
-					const timeA = a.startTime.split(':').map(Number);
-					const timeB = b.startTime.split(':').map(Number);
-					if (timeB[0] !== timeA[0]) {
-						return timeB[0] - timeA[0];
-					} else {
-						return timeB[1] - timeA[1];
-					}
-				}
-			});
+	$: if (selectedMonth && selectedYear) {
+		fetchLessons();
+	}
 
-			lessonsStore.set(lessons);
-		} catch (error) {
-			console.error(error);
-		}
+	// fetch data for inital load
+	$: if ($lessonsStore) {
+		fetchPaymentTypeTotals($lessonsStore);
+		fetchTotalDuration($lessonsStore);
+	}
+
+	const fetchPaymentTypeTotals = async (updatedLessons) => {
+		const paymentTypeTotals = await getPaymentTypeTotals(updatedLessons);
+		cashAmount = paymentTypeTotals.cashAmount;
+		interacAmount = paymentTypeTotals.interacAmount;
+	};
+
+	const fetchTotalDuration = async (updatedLessons) => {
+		totalDuration = await getTotalDuration(updatedLessons);
 	};
 
 	// this function downloads the lessons array as a CSV file
 	const downloadCSV = () => {
-		console.log('lesson', lessons);
 		const csvData = convertToCSV(lessons);
 		const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
 		downloadLink.href = csvUrl;
-		downloadLink.download = 'lessons.csv';
+		downloadLink.download = `${selectedMonth}-${selectedYear} lessons.csv`;
 		downloadLink.click();
 		URL.revokeObjectURL(csvUrl);
 	};
@@ -105,78 +106,14 @@
 		return [headers.join(','), ...csvRows].join('\n');
 	};
 
-	// get the total duration of all lessons
-	const getTotalDuration = (lessons) => {
-		let totalMinutes = 0;
-
-		for (let lesson of lessons) {
-			const [hours, minutes] = lesson.duration.split(' ');
-
-			totalMinutes += Number(hours.replace('h', '')) * 60 + Number(minutes.replace('m', ''));
-		}
-
-		const hours = Math.floor(totalMinutes / 60);
-		const minutes = totalMinutes % 60;
-
-		return `${hours}h ${minutes}m`;
-	};
-
-	// $: getLessons(selectedYear, selectedMonth);
-
-	// FIXME: The website crashes when the user selects a year/month that has no lessons
-
-	// subscribe to the lessonsStore and call getLessons when the store is updated
-	lessonsStore.subscribe(() => {
-		getLessons(selectedYear, selectedMonth);
-	});
-
-	// event dispatcher to dispatch 'LessonAdded' event
-	const dispatchLessonAdded = () => {
-		const event = new CustomEvent('lessonAdded');
-		dispatchEvent(event);
-	};
-
-	// call dispatchLessonAdded when component is mounted
-	// onMount(() => {
-	// 	dispatchLessonAdded();
-	// 	window.addEventListener('lessonAdded', () => {
-	// 		getLessons(selectedYear, selectedMonth); // Fetch lessons from the database
-	// 	});
-	// });
-	onMount(() => {
-    getLessons(selectedYear, selectedMonth); // Call getLessons initially when the component mounts
-
-    dispatchLessonAdded();
-    window.addEventListener('lessonAdded', () => {
-        getLessons(selectedYear, selectedMonth); // Fetch lessons from the database
-    });
-});
-
-	// Gets the totals by Payment Type
-	const paymentTypes = ['Cash', 'Interac'];
-
-	$: paymentTypeTotals = paymentTypes.reduce((acc, paymentType) => {
-		const total = lessons.reduce((sum, lesson) => {
-			if (lesson.paymentType === paymentType) {
-				return sum + parseFloat(lesson.paymentAmount);
-			}
-			return sum;
-		}, 0);
-		return { ...acc, [paymentType]: total };
-	}, {});
-
-	// Delete Action
-	const deleteRow = async (index) => {
-		try {
-			const response = await axios.delete(`http://localhost:3000/${index}`);
-
-			if (response.status === 200 || response.status === 204) {
-				lessons = lessons.filter((val) => val.id !== index);
-			} else {
-				console.error('Error deleting row:', response);
-			}
-		} catch (error) {
-			console.error(error);
+	const confirmDeletion = async () => {
+		const { success } = await deleteRow('http://localhost:3000', deleteIndex);
+		if (success) {
+			lessons = lessons.filter((val) => val.id !== deleteIndex);
+			fetchLessons();
+			fetchTotalDuration(lessons);
+			fetchPaymentTypeTotals(lessons);
+			closeModal();
 		}
 	};
 
@@ -189,14 +126,8 @@
 		showModal = false;
 	};
 
-	const confirmDeletion = () => {
-		deleteRow(deleteIndex);
-		closeModal();
-	};
-
 	// Edit Action
 	const editRowIndex = (index) => {
-		console.log('editRowIndex index', index);
 		editingIndex = index;
 	};
 
@@ -205,8 +136,7 @@
 	};
 
 	const handleEditDone = () => {
-		getLessons(selectedYear, selectedMonth);
-		getTotalDuration(lessons);
+		fetchLessons();
 	};
 </script>
 
@@ -262,14 +192,14 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each $lessonsStore.reverse() as lesson, index}
+						{#each $lessonsStore as lesson, index}
 							{#if editingIndex === lesson.id}
 								<Edit
 									data={lesson}
 									{index}
 									onCancel={cancelEdit}
 									on:updated={() => {
-										handleEditDone;
+										handleEditDone();
 									}}
 								/>
 							{:else}
@@ -380,13 +310,13 @@
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
-								>Total: {getTotalDuration($lessonsStore)}</td
+								>Total: {totalDuration}</td
 							>
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
-								>Total: ${paymentTypeTotals['Cash']}</td
+								>Total: ${cashAmount}</td
 							>
 							<td class="whitespace-nowrap px-6 py-4 font-medium text-indigo-600"
-								>Total: ${paymentTypeTotals['Interac']}</td
+								>Total: ${interacAmount}</td
 							>
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
 							<td class="whitespace-nowrap px-6 py-4 font-medium" />
