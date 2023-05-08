@@ -1,4 +1,8 @@
 import axios from 'axios';
+import { writable } from 'svelte/store';
+
+// this lets the view.svelte component know when to refresh the lessons becuase the user added a new lesson
+export const refreshLessons = writable(false);
 
 export const getLessons = async (selectedYear, selectedMonth) => {
 	let lessons = [];

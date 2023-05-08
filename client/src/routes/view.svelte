@@ -1,6 +1,6 @@
 <script>
 	import { writable } from 'svelte/store';
-	import { getLessons, getTotalDuration, getPaymentTypeTotals } from './utils';
+	import { getLessons, getTotalDuration, getPaymentTypeTotals, refreshLessons } from './utils';
 	import { deleteRow } from './utils/deleteUtil';
 	import Edit from './edit.svelte';
 
@@ -42,6 +42,13 @@
 	$: if (selectedMonth && selectedYear) {
 		fetchLessons();
 	}
+
+	$: refreshLessons.subscribe((value) => {
+		if (value) {
+			fetchLessons();
+			refreshLessons.set(false);
+		}
+	});
 
 	// fetch data for inital load
 	$: if ($lessonsStore) {
