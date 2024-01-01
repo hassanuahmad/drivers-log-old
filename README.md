@@ -7,4 +7,3 @@ A comprehensive web app designed for driving instructors to manage lessons, trac
 * Svelte
 * TailwindCSS
 * SQLite
-* 
