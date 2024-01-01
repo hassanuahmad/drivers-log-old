@@ -1,6 +1,4 @@
-```
-THIS REPO HAS BEEN ARCHIVED, PLEASE USE THIS [NEW REPO](https://github.com/hassanuahmad/drivers-log)
-```
+> THIS REPO HAS BEEN ARCHIVED, PLEASE USE THIS [NEW REPO](https://github.com/hassanuahmad/drivers-log)
 
 # Drivers Log
 
